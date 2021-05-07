@@ -785,6 +785,19 @@ namespace rs2
             rs2_export_to_ply(get(), fname.c_str(), ptr, &e);
             error::handle(e);
         }
+
+        /**
+        * Export the point cloud to a PLY file without the color layer
+        * \param[in] string fname - file name of the PLY to be saved
+        */
+        void export_to_ply_notexture(const std::string& fname)
+        {
+            rs2_frame* ptr = nullptr;
+            rs2_error* e = nullptr;
+            rs2_export_to_ply_notexture(get(), fname.c_str(), &e);
+            error::handle(e);
+        }
+
         /**
         * Retrieve the texture coordinates (uv map) for the point cloud
         * \return texture_coordinate* - pointer of texture coordinates.

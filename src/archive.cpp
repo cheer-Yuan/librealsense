@@ -141,6 +141,79 @@ namespace librealsense
         }
     }
 
+    void points::export_to_ply_notexture(const std::string& fname)
+    {
+        auto stream_profile = get_stream().get();
+        auto video_stream_profile = dynamic_cast<video_stream_profile_interface*>(stream_profile);
+        if (!video_stream_profile)
+            throw librealsense::invalid_value_exception("stream must be video stream");
+        const auto vertices = get_vertices();
+        std::vector<float3> new_vertices;
+        std::map<int, int> index2reducedIndex;
+
+        new_vertices.reserve(get_vertex_count());
+        assert(get_vertex_count());
+        for (int i = 0; i < get_vertex_count(); ++i)
+            if (fabs(vertices[i].x) >= MIN_DISTANCE || fabs(vertices[i].y) >= MIN_DISTANCE ||
+                fabs(vertices[i].z) >= MIN_DISTANCE)
+            {
+                index2reducedIndex[i] = (int)new_vertices.size();
+                new_vertices.push_back({ vertices[i].x,  -1*vertices[i].y, -1*vertices[i].z });
+            }
+
+        const auto threshold = 0.05f;
+        auto width = video_stream_profile->get_width();
+        std::vector<std::tuple<int, int, int>> faces;
+        for( uint32_t x = 0; x < width - 1; ++x )
+        {
+            for( uint32_t y = 0; y < video_stream_profile->get_height() - 1; ++y )
+            {
+                auto a = y * width + x, b = y * width + x + 1, c = (y + 1)*width + x, d = (y + 1)*width + x + 1;
+                if (vertices[a].z && vertices[b].z && vertices[c].z && vertices[d].z
+                    && abs(vertices[a].z - vertices[b].z) < threshold && abs(vertices[a].z - vertices[c].z) < threshold
+                    && abs(vertices[b].z - vertices[d].z) < threshold && abs(vertices[c].z - vertices[d].z) < threshold)
+                {
+                    if (index2reducedIndex.count(a) == 0 || index2reducedIndex.count(b) == 0 || index2reducedIndex.count(c) == 0 ||
+                        index2reducedIndex.count(d) == 0)
+                        continue;
+
+                    faces.emplace_back(index2reducedIndex[a], index2reducedIndex[d], index2reducedIndex[b]);
+                    faces.emplace_back(index2reducedIndex[d], index2reducedIndex[a], index2reducedIndex[c]);
+                }
+            }
+        }
+
+        std::ofstream out(fname);
+        out << "ply\n";
+        out << "format binary_little_endian 1.0\n";
+        out << "comment pointcloud saved from Realsense Viewer\n";
+        out << "element vertex " << new_vertices.size() << "\n";
+        out << "property float" << sizeof(float) * 8 << " x\n";
+        out << "property float" << sizeof(float) * 8 << " y\n";
+        out << "property float" << sizeof(float) * 8 << " z\n";
+        out << "element face " << faces.size() << "\n";
+        out << "property list uchar int vertex_indices\n";
+        out << "end_header\n";
+        out.close();
+
+        out.open(fname, std::ios_base::app | std::ios_base::binary);
+        for (int i = 0; i < new_vertices.size(); ++i)
+        {
+            // we assume little endian architecture on your device
+            out.write(reinterpret_cast<const char*>(&(new_vertices[i].x)), sizeof(float));
+            out.write(reinterpret_cast<const char*>(&(new_vertices[i].y)), sizeof(float));
+            out.write(reinterpret_cast<const char*>(&(new_vertices[i].z)), sizeof(float));
+        }
+        auto size = faces.size();
+        for (int i = 0; i < size; ++i) {
+            int three = 3;
+            out.write(reinterpret_cast<const char*>(&three), sizeof(uint8_t));
+            out.write(reinterpret_cast<const char*>(&(std::get<0>(faces[i]))), sizeof(int));
+            out.write(reinterpret_cast<const char*>(&(std::get<1>(faces[i]))), sizeof(int));
+            out.write(reinterpret_cast<const char*>(&(std::get<2>(faces[i]))), sizeof(int));
+        }
+    }
+
     size_t points::get_vertex_count() const
     {
         return data.size() / (sizeof(float3) + sizeof(int2));
@@ -153,7 +226,6 @@ namespace librealsense
         auto ijs = (float2*)(xyz + get_vertex_count());
         return ijs;
     }
-
 
     std::shared_ptr<archive_interface> make_archive(rs2_extension type,
         std::atomic<uint32_t>* in_max_frame_queue_size,
