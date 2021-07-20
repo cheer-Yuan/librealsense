@@ -792,9 +792,19 @@ namespace rs2
         */
         void export_to_ply_notexture(const std::string& fname)
         {
-            rs2_frame* ptr = nullptr;
             rs2_error* e = nullptr;
             rs2_export_to_ply_notexture(get(), fname.c_str(), &e);
+            error::handle(e);
+        }
+
+        /**
+        * Export the point cloud to a PLY file without the color layer
+        * \param[in] string fname - file name of the PLY to be saved
+        */
+        void pipe_to_ply_notexture(const std::string& fname)
+        {
+            rs2_error* e = nullptr;
+            rs2_pipe_to_ply_notexture(get(), fname.c_str(), &e);
             error::handle(e);
         }
 

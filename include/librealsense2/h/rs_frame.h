@@ -10,10 +10,13 @@
 #ifndef LIBREALSENSE_RS2_FRAME_H
 #define LIBREALSENSE_RS2_FRAME_H
 
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 #include "rs_types.h"
+
 
 /** \brief Specifies the clock in relation to which the frame timestamp was measured. */
 typedef enum rs2_timestamp_domain
@@ -232,6 +235,14 @@ void rs2_export_to_ply(const rs2_frame* frame, const char* fname, rs2_frame* tex
 * \param[out] error      If non-null, receives any error that occurs during this call, otherwise, errors are ignored
 */
 void rs2_export_to_ply_notexture(const rs2_frame* frame, const char* fname, rs2_error** error);
+
+/**
+* When called on Points frame type, this method write a ply file to the named pipr with the given name, excluding the color information.
+* \param[in] frame       Points frame
+* \param[in] fname       The name for the ply file
+* \param[out] error      If non-null, receives any error that occurs during this call, otherwise, errors are ignored
+*/
+void rs2_pipe_to_ply_notexture(const rs2_frame* frame, const char* fname, rs2_error** error);
 
 /**
 * When called on Points frame type, this method returns a pointer to an array of texture coordinates per vertex

@@ -8,6 +8,12 @@
 #include <atomic>
 #include <array>
 #include <math.h>
+#include <fstream>
+#include <string>
+#include <iostream>
+#include <sstream>
+#include <thread>
+#include <chrono>
 
 namespace librealsense
 {
@@ -187,6 +193,7 @@ namespace librealsense
     public:
         float3* get_vertices();
         void export_to_ply(const std::string& fname, const frame_holder& texture);
+        void pipe_to_ply_notexture(const std::string& fname);
         void export_to_ply_notexture(const std::string& fname);
         size_t get_vertex_count() const;
         float2* get_texture_coordinates();

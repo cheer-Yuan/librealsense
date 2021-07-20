@@ -2177,6 +2177,15 @@ void rs2_export_to_ply_notexture(const rs2_frame* frame, const char* fname, rs2_
 }
 HANDLE_EXCEPTIONS_AND_RETURN(, frame, fname)
 
+void rs2_pipe_to_ply_notexture(const rs2_frame* frame, const char* fname, rs2_error** error) BEGIN_API_CALL
+{
+    VALIDATE_NOT_NULL(frame);
+    VALIDATE_NOT_NULL(fname);
+    auto points = VALIDATE_INTERFACE((frame_interface*)frame, librealsense::points);
+    points->pipe_to_ply_notexture(fname);
+}
+HANDLE_EXCEPTIONS_AND_RETURN(, frame, fname)
+
 rs2_pixel* rs2_get_frame_texture_coordinates(const rs2_frame* frame, rs2_error** error) BEGIN_API_CALL
 {
     VALIDATE_NOT_NULL(frame);
